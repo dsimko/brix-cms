@@ -14,20 +14,25 @@
 
 package org.brixcms.plugin.site.folder;
 
+import org.apache.wicket.core.request.handler.PageProvider;
+import org.apache.wicket.core.request.handler.RenderPageRequestHandler;
 import org.apache.wicket.markup.html.panel.Panel;
 import org.apache.wicket.model.IModel;
 import org.apache.wicket.model.ResourceModel;
 import org.apache.wicket.request.IRequestHandler;
 import org.apache.wicket.request.cycle.RequestCycle;
-import org.apache.wicket.core.request.handler.PageProvider;
-import org.apache.wicket.core.request.handler.RenderPageRequestHandler;
 import org.apache.wicket.request.http.handler.RedirectRequestHandler;
 import org.brixcms.Brix;
+import org.brixcms.BrixNodeModel;
 import org.brixcms.jcr.wrapper.BrixNode;
 import org.brixcms.plugin.site.NodeConverter;
 import org.brixcms.plugin.site.SimpleCallback;
 import org.brixcms.plugin.site.SiteNodePlugin;
 import org.brixcms.plugin.site.SitePlugin;
+import org.brixcms.plugin.site.page.PageRenderingPage;
+import org.brixcms.web.nodepage.BrixNodePageRequestHandler;
+import org.brixcms.web.nodepage.BrixNodePageRequestHandler.PageFactory;
+import org.brixcms.web.nodepage.BrixNodeWebPage;
 import org.brixcms.web.nodepage.BrixPageParameters;
 import org.brixcms.web.nodepage.ForbiddenPage;
 import org.brixcms.web.reference.Reference;
@@ -49,7 +54,7 @@ public class FolderNodePlugin implements SiteNodePlugin {
         return "Folder";
     }
 
-    public IRequestHandler respond(IModel<BrixNode> nodeModel, BrixPageParameters requestParameters) {
+    public IRequestHandler respond(IModel<BrixNode> nodeModel, final BrixPageParameters requestParameters) {
         BrixNode node = nodeModel.getObject();
 
 //        String path = requestParameters.getPath();
@@ -72,7 +77,21 @@ public class FolderNodePlugin implements SiteNodePlugin {
             final CharSequence url = RequestCycle.get().urlFor(target);
             return new RedirectRequestHandler(url.toString());
         } else {
-            return new RenderPageRequestHandler(new PageProvider(new ForbiddenPage(/*path*/)));
+            if (node.hasNode(SitePlugin.BRIX_INDEX_PAGE)) {
+                BrixNode indexPage = (BrixNode) node.getNode(SitePlugin.BRIX_INDEX_PAGE);
+                final BrixNodeModel<BrixNode> indexPageModel = new BrixNodeModel<>(indexPage);
+                PageFactory factory = new PageFactory() {
+                    public BrixNodeWebPage newPage() {
+                        return new PageRenderingPage(indexPageModel, requestParameters);
+                    }
+
+                    public BrixPageParameters getPageParameters() {
+                        return requestParameters;
+                    }
+                };
+                return new BrixNodePageRequestHandler(indexPageModel, factory);
+            }
+            return new RenderPageRequestHandler(new PageProvider(new ForbiddenPage(/* path */)));
         }
     }
 
