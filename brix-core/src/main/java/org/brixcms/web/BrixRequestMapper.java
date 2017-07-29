@@ -194,7 +194,11 @@ public class BrixRequestMapper implements IRequestMapper {
         final Url url = request.getClientUrl();
 
         // FIXME quick fix for sportave
-        if (request.getUrl().getHost().toLowerCase().startsWith(SPORTAVE)) {
+        String host = request.getUrl().getHost().toLowerCase();
+        if (host.startsWith("www.")) {
+            host = host.substring(4);
+        }
+        if (host.startsWith(SPORTAVE)) {
             return null;
         }
 
