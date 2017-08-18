@@ -81,7 +81,7 @@ public class ResourceNodeHandler implements IRequestHandler {
 		response.setContentType(node.getMimeType());
 
 		Date lastModified = node.getLastModified();
-		response.setLastModifiedTime(Time.valueOf(lastModified));
+        response.setLastModifiedTime(Time.valueOf(lastModified != null ? lastModified : new Date()));
 
 		try {
 			final HttpServletRequest r = (HttpServletRequest) requestCycle.getRequest().getContainerRequest();
